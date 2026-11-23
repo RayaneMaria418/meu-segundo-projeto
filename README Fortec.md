@@ -50,7 +50,7 @@ O projeto foi estruturado com princípios inspirados em:
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/<seu-usuario>/fortec.git
+   git clone https://github.com/<RayaneMaria418>/fortec.git
    cd fortec
    ```
 2. Abra o `index.html` diretamente no navegador (é necessária conexão com a internet para carregar as bibliotecas via CDN).
@@ -91,13 +91,10 @@ O código do `index.html` é organizado em seções comentadas: estado e dados m
 - [ ] Transformar em PWA instalável com modo offline para o cartão de acesso
 - [ ] Testes automatizados e auditoria de acessibilidade (WCAG)
 
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Abra uma *issue* para discutir mudanças ou envie um *pull request*.
 
 ## 📄 Licença
 
-Defina a licença do projeto (por exemplo, [MIT](https://opensource.org/licenses/MIT)) e adicione o arquivo `LICENSE` ao repositório.
+.gitignore
 
 ---
 
