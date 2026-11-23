@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FORTEC – Fortaleza Tecnológica</title>
+<!-- Tailwind, Lucide e gerador de QR (ISO/IEC 18004, correção de erro nível M) via CDN -->
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+ body{background:#030816;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+ .card{background:rgba(13,30,70,.72);border:1px solid rgba(56,130,255,.22);border-radius:1.25rem;padding:1rem}
+ .btn{background:linear-gradient(90deg,#2563eb,#06b6d4);border-radius:.9rem;padding:.8rem 1rem;font-weight:600;width:100%;color:#fff;transition:.15s}
+ .btn:active{transform:scale(.97)}
+ .btn2{border:1px solid #1e40af;background:#0a1a40;border-radius:.9rem;padding:.7rem 1rem;font-weight:500;width:100%}
+ .inp{width:100%;background:#071634;border:1px solid #1e3a8a;border-radius:.8rem;padding:.7rem .9rem;margin-top:.25rem;outline:none;color:#fff}
+ .inp:focus{border-color:#22d3ee}
+ label{font-size:.75rem;color:#93c5fd;display:block;margin-top:.7rem}
+ .scr{display:none;padding:1rem}.scr.on{display:block;animation:f .25s}
+ @keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+ .av{background-size:cover;background-position:center;background:linear-gradient(135deg,#2563eb,#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;border-radius:9999px;flex-shrink:0}
+ nav button.on{color:#22d3ee}
+ .ok{color:#34d399}.bad{color:#f87171}
+ #qr img{width:100%;image-rendering:pixelated;border-radius:.5rem}
+</style>
+</head>
+<body class="text-slate-100">
+<div id="app" class="relative mx-auto max-w-md min-h-screen bg-gradient-to-b from-[#071a4a] via-[#050f2c] to-[#030816] pb-24 overflow-x-hidden">
+
+<!-- ============ 1. ONBOARDING (3 etapas) ============ -->
+<section id="s-onb" class="scr on">
+  <div class="flex items-center gap-2 mb-5"><span class="logo"></span><b class="text-xl tracking-widest">FORTEC</b></div>
+  <div class="flex gap-1 mb-4" id="steps"></div>
+  <div class="st card">
+    <h2 class="font-bold text-lg">Sua foto de perfil</h2>
+    <p class="text-sm text-slate-400">Usada para conferência visual na portaria.</p>
+    <div class="flex flex-col items-center my-5 gap-3">
+      <div class="av av-big w-28 h-28 text-3xl"></div>
+      <label class="!mt-0 btn2 text-center cursor-pointer !text-cyan-300 w-auto px-5">Enviar foto<input type="file" accept="image/*" class="hidden" id="photoIn"></label>
+      <button class="text-xs text-cyan-300 underline" onclick="U.photo=null;paintAv()">Usar avatar simulado</button>
+    </div>
+  </div>
+  <div class="st card hidden">
+    <h2 class="font-bold text-lg">Dados cadastrais</h2>
+    <label>Nome completo</label><input id="o-name" class="inp" value="Grazi Souza">
+    <label>CPF</label><input id="o-cpf" class="inp" value="123.456.789-09" maxlength="14" inputmode="numeric">
+    <label>Matrícula / ID</label><input id="o-mat" class="inp" value="2023104587">
+    <label>E-mail institucional</label><input id="o-mail" class="inp" value="grazi.souza@aluno.fortec.edu.br">
+    <label>Tipo de usuário</label><select id="o-type" class="inp"><option>Aluno</option><option>Professor</option><option>Servidor</option><option>Visitante</option></select>
+  </div>
+  <div class="st card hidden">
+    <h2 class="font-bold text-lg">Segurança</h2>
+    <label>Senha</label><input id="o-p1" type="password" class="inp" value="senha@2026">
+    <label>Confirmar senha</label><input id="o-p2" type="password" class="inp" value="senha@2026">
+    <p class="text-xs text-slate-400 mt-3">🔒 LGPD (ISO/IEC 27701): seus dados são usados apenas para controle de acesso, o CPF é mascarado na interface e os tokens expiram a cada 30 s.</p>
+    <label class="flex gap-2 items-start !text-slate-300"><input type="checkbox" checked class="mt-1 accent-cyan-400"> Li e aceito a Política de Privacidade.</label>
+  </div>
+  <div class="flex gap-2 mt-4"><button id="obBack" class="btn2 !w-1/3">Voltar</button><button id="obNext" class="btn">Continuar</button></div>
+  <button class="w-full text-center text-xs text-slate-500 mt-4" onclick="go('home')">Pular (usar conta de demonstração)</button>
+</section>
+
+<!-- ============ 2. HOME ============ -->
+<section id="s-home" class="scr">
+  <header class="flex items-center gap-3 mb-4">
+    <div class="av w-12 h-12"></div>
+    <div class="flex-1"><div class="font-bold" id="hello">Olá!</div><div class="text-xs text-slate-400">Matrícula <span class="ok font-semibold">● Ativa</span> · <span id="h-type"></span></div></div>
+    <button onclick="go('admin')" class="text-[10px] border border-cyan-500/40 text-cyan-300 rounded-full px-2 py-1">ADMIN</button>
+    <button class="relative p-2 rounded-full bg-white/5" onclick="toast('Você tem 2 avisos: aula remarcada e novo acesso ao Lab. 3')"><i data-lucide="bell" class="w-5 h-5"></i><span class="absolute top-1 right-1 w-2 h-2 bg-cyan-400 rounded-full"></span></button>
+  </header>
+
+  <div class="card text-center">
+    <div class="text-xs tracking-widest text-cyan-300 mb-2">CARTÃO DE ACESSO DIGITAL</div>
+    <div class="bg-white rounded-2xl p-3 w-56 mx-auto" id="qr"></div>
+    <div class="mt-3 h-2 rounded-full bg-white/10 overflow-hidden"><div id="bar" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400" style="width:100%"></div></div>
+    <div class="text-xs text-slate-400 mt-1">QR dinâmico · renova em <b id="cd" class="text-cyan-300">30s</b> (protege contra prints)</div>
+    <div class="mt-3 flex items-center justify-center gap-3 bg-[#071634] rounded-xl py-2">
+      <div><div class="text-[10px] text-slate-400">PIN ALTERNATIVO</div><div id="pin" class="text-2xl font-mono tracking-[.25em] font-bold text-cyan-300">---</div></div>
+      <button onclick="refreshPin()" class="p-2 rounded-full bg-blue-600/30" title="Atualizar PIN"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+    </div>
+  </div>
+
+  <div class="card mt-3 flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"><i data-lucide="shield-check" class="text-emerald-400"></i></div>
+    <div class="flex-1"><div class="ok font-semibold">Acesso Liberado</div><div class="text-xs text-slate-400" id="last">—</div></div>
+    <button onclick="openSim()" class="text-xs btn !w-auto !py-2 !px-3">Simular catraca</button>
+  </div>
+
+  <div class="grid grid-cols-3 gap-2 mt-3 text-xs text-center">
+    <button class="card !p-3" onclick="go('visit')"><i data-lucide="user-plus" class="mx-auto mb-1 text-cyan-300"></i>Convidar visitante</button>
+    <button class="card !p-3" onclick="go('hist')"><i data-lucide="history" class="mx-auto mb-1 text-cyan-300"></i>Histórico</button>
+    <button class="card !p-3" onclick="toast('🚨 Central de Segurança acionada (simulação) · Ramal 190')"><i data-lucide="life-buoy" class="mx-auto mb-1 text-red-400"></i>Suporte / Emergência</button>
+  </div>
+</section>
+
+<!-- ============ 3. CONVITE DE VISITANTE ============ -->
+<section id="s-visit" class="scr">
+  <h2 class="text-lg font-bold mb-3">Convidar visitante</h2>
+  <div class="card">
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="!mt-0">Nome</label><input id="v-name" class="inp" placeholder="Nome do visitante"></div>
+      <div><label class="!mt-0">Documento</label><input id="v-doc" class="inp" placeholder="RG/CPF"></div>
+    </div>
+    <label>Motivo</label><input id="v-reason" class="inp" value="Reunião acadêmica">
+    <div class="grid grid-cols-2 gap-2">
+      <div><label>Local autorizado</label><select id="v-place" class="inp"><option>Bloco Central</option><option>Biblioteca</option><option>Lab. Informática</option><option>Auditório</option></select></div>
+      <div><label>Validade</label><select id="v-dur" class="inp"><option value="2">2 horas</option><option value="4" selected>4 horas</option><option value="8">8 horas</option></select></div>
+    </div>
+    <button class="btn mt-4" onclick="genPass()">Gerar passe temporário</button>
+  </div>
+  <div class="card mt-3" id="vcard"></div>
+</section>
+
+<!-- ============ 4. HISTÓRICO ============ -->
+<section id="s-hist" class="scr">
+  <h2 class="text-lg font-bold mb-3">Histórico de acessos</h2>
+  <div class="grid grid-cols-2 gap-2 mb-3">
+    <input type="date" id="f-date" class="inp !mt-0" onchange="renderHist()">
+    <select id="f-gate" class="inp !mt-0" onchange="renderHist()"></select>
+  </div>
+  <div id="hist" class="space-y-2"></div>
+</section>
+
+<!-- ============ 5. PERFIL / CONFIGURAÇÕES ============ -->
+<section id="s-prof" class="scr">
+  <div class="flex flex-col items-center gap-2 mb-4">
+    <div class="av w-24 h-24 text-2xl"></div>
+    <label class="!mt-0 text-xs text-cyan-300 cursor-pointer underline">Alterar foto<input type="file" accept="image/*" class="hidden" id="photoIn2"></label>
+    <div class="font-bold" id="p-name"></div><div class="text-xs text-slate-400" id="p-sub"></div>
+  </div>
+  <div class="card">
+    <label class="!mt-0">E-mail institucional</label><input id="p-mail" class="inp">
+    <label>Telefone</label><input class="inp" value="(61) 99876-5432">
+    <label>CPF (mascarado – LGPD)</label><input id="p-cpf" class="inp" disabled>
+    <button class="btn mt-3" onclick="toast('Dados salvos com sucesso')">Salvar alterações</button>
+  </div>
+  <div class="card mt-3 space-y-3 text-sm">
+    <div class="font-semibold">Segurança e notificações</div>
+    <label class="!mt-0 flex justify-between !text-slate-200 text-sm">Biometria para abrir o app<input type="checkbox" checked class="accent-cyan-400"></label>
+    <label class="!mt-0 flex justify-between !text-slate-200 text-sm">Autenticação em 2 fatores<input type="checkbox" checked class="accent-cyan-400"></label>
+    <label class="!mt-0 flex justify-between !text-slate-200 text-sm">Notificar a cada entrada<input type="checkbox" class="accent-cyan-400"></label>
+    <label class="!mt-0 flex justify-between !text-slate-200 text-sm">Alertas de segurança<input type="checkbox" checked class="accent-cyan-400"></label>
+    <button class="btn2" onclick="toast('Link de redefinição enviado ao e-mail institucional')">Alterar senha</button>
+  </div>
+  <div class="card mt-3 text-sm">
+    <div class="font-semibold mb-2">Dispositivos conectados</div>
+    <div class="flex justify-between py-1"><span>📱 Galaxy S23 <span class="text-xs ok">(este)</span></span><span class="text-xs text-slate-400">agora</span></div>
+    <div class="flex justify-between py-1"><span>💻 Chrome · Windows</span><button class="text-xs bad" onclick="this.parentNode.remove();toast('Dispositivo desconectado')">Remover</button></div>
+  </div>
+  <button class="btn2 mt-3 !text-red-300" onclick="go('onb')">Sair (logout)</button>
+  <button class="btn2 mt-2" onclick="go('admin')">Abrir Painel do Administrador</button>
+</section>
+
+<!-- ============ 6. PAINEL ADMIN ============ -->
+<section id="s-admin" class="scr">
+  <div class="flex items-center gap-2 mb-3"><button onclick="go('home')"><i data-lucide="arrow-left"></i></button><h2 class="text-lg font-bold flex-1">Painel de Gestão</h2><span class="text-xs ok">● ao vivo</span></div>
+  <div class="grid grid-cols-2 gap-2 text-center">
+    <div class="card !p-3"><div class="text-[11px] text-slate-400">Usuários ativos</div><div id="m-users" class="text-2xl font-bold text-cyan-300">12.847</div></div>
+    <div class="card !p-3"><div class="text-[11px] text-slate-400">Catracas online</div><div class="text-2xl font-bold ok" id="m-gates"></div></div>
+    <div class="card !p-3"><div class="text-[11px] text-slate-400">Alertas ativos</div><div id="m-alerts" class="text-2xl font-bold bad">3</div></div>
+    <div class="card !p-3"><div class="text-[11px] text-slate-400">Carga do servidor</div><div id="m-cpu" class="text-2xl font-bold text-blue-300">38%</div></div>
+  </div>
+  <div class="card mt-3"><div class="font-semibold text-sm mb-2">Tráfego por horário <span class="text-[10px] text-slate-400">■ entrada <span class="text-cyan-300">■</span> saída</span></div><div id="chart" class="flex items-end gap-[3px] h-28"></div><div class="flex justify-between text-[10px] text-slate-500 mt-1"><span>06h</span><span>12h</span><span>18h</span><span>22h</span></div></div>
+  <div class="card mt-3"><div class="font-semibold text-sm mb-2">Catracas</div><div id="gl" class="text-xs space-y-1"></div></div>
+  <div class="card mt-3"><div class="font-semibold text-sm mb-2">Eventos em tempo real</div><div id="feed" class="text-xs space-y-1 max-h-60 overflow-auto"></div></div>
+  <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
+    <button class="btn2" onclick="toast('Gerenciar usuários (demo)')">👥 Usuários</button><button class="btn2" onclick="toast('3 convites pendentes de verificação')">🎫 Convites</button>
+    <button class="btn2" onclick="toast('Catraca Ginásio offline desde 07:42')">🚧 Catracas</button><button class="btn2" onclick="toast('Relatório PDF gerado (simulação)')">📄 Relatórios</button>
+  </div>
+</section>
+
+<!-- NAV INFERIOR -->
+<nav id="nav" class="hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-[#050f2c]/95 backdrop-blur border-t border-blue-900 grid grid-cols-4 text-[11px] text-slate-400 pb-[env(safe-area-inset-bottom)] z-20">
+  <button data-go="home" class="py-2"><i data-lucide="home" class="mx-auto w-5 h-5"></i>Início</button>
+  <button data-go="visit" class="py-2"><i data-lucide="qr-code" class="mx-auto w-5 h-5"></i>Meus QRs</button>
+  <button data-go="hist" class="py-2"><i data-lucide="history" class="mx-auto w-5 h-5"></i>Histórico</button>
+  <button data-go="prof" class="py-2"><i data-lucide="user" class="mx-auto w-5 h-5"></i>Perfil</button>
+</nav>
+
+<!-- ============ SIMULADOR DE CATRACA ============ -->
+<div id="sim" class="hidden fixed inset-0 z-30 bg-black/70 flex items-end justify-center">
+  <div class="w-full max-w-md bg-[#071634] rounded-t-3xl p-4 border-t border-cyan-500/30">
+    <div class="flex justify-between items-center mb-2"><b>Simular leitura na catraca</b><button onclick="$('sim').classList.add('hidden')" class="text-xl">✕</button></div>
+    <div id="simOut" class="rounded-2xl py-6 text-center font-bold text-lg bg-slate-800 text-slate-400 transition">Aguardando leitura…</div>
+    <div class="grid grid-cols-2 gap-2 mt-3"><select id="sGate" class="inp !mt-0"></select><select id="sMov" class="inp !mt-0"><option>Entrada</option><option>Saída</option></select></div>
+    <button class="btn mt-3" onclick="scan('qr')">📷 Ler QR Code atual</button>
+    <div class="flex gap-2 mt-2"><input id="sPin" class="inp !mt-0" placeholder="Digite o PIN (6 dígitos)" inputmode="numeric"><button class="btn2 !w-auto" onclick="scan('pin',$('sPin').value)">Validar</button></div>
+    <button class="btn2 mt-2 text-sm" onclick="scan('vis')">🎫 Ler passe do visitante</button>
+    <p class="text-[10px] text-slate-500 mt-2">Validação: token TOTP (HMAC-SHA1, janela de 30 s) + bloqueio de reutilização (anti-replay).</p>
+  </div>
+</div>
+<div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-blue-700 text-sm px-4 py-2 rounded-full shadow-lg max-w-[90%] text-center"></div>
+</div>
+
+<script>
+/* ======================= ESTADO & DADOS MOCK ======================= */
+const $=id=>document.getElementById(id);
+const SECRET='FORTEC-DEMO-SEED-2026';                       // segredo TOTP (em produção: guardado no servidor/HSM)
+const U={name:'Grazi Souza',cpf:'123.456.789-09',mat:'2023104587',type:'Aluno',mail:'grazi.souza@aluno.fortec.edu.br',photo:null};
+const GATES=['Bloco Central','Biblioteca','Lab. Informática','Restaurante Univ.','Portaria Principal','Ginásio'];
+const NAMES=['Lucas Ferreira','Marina Costa','Prof. Ricardo Alves','Beatriz Nunes','João Pedro Lima','Camila Rocha','Dr. André Souza','Felipe Martins'];
+const pad=n=>String(n).padStart(2,'0'), hm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+const dk=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const mask=c=>'***.'+c.slice(4,11)+'-**';                    // mascaramento de CPF (LGPD)
+const fmtPin=p=>p.slice(0,3)+'-'+p.slice(3);
+let offset=0, lastC=-1, cur={otp:'',pin:'',token:'',c:0}, used=new Set(), step=0;
+// Histórico inicial: [diasAtrás,hora,min,gate,mov,método,ok]
+let LOG=[[0,8,15,0,'Entrada','QR Code',1],[1,17,40,4,'Saída','QR Code',1],[1,12,5,3,'Entrada','PIN',1],[1,8,2,0,'Entrada','QR Code',1],
+ [2,19,12,1,'Saída','QR Code',1],[2,14,30,2,'Entrada','PIN',0],[2,13,55,1,'Entrada','QR Code',1],[3,18,0,4,'Saída','QR Code',1],[3,7,58,4,'Entrada','QR Code',1],[4,10,20,5,'Entrada','PIN',1]]
+ .map(r=>{const d=new Date();d.setDate(d.getDate()-r[0]);d.setHours(r[1],r[2],0,0);return{d,gate:GATES[r[3]],mov:r[4],met:r[5],ok:!!r[6]}});
+let V={name:'Carlos Mendes',doc:'RG 12.345.678-X',reason:'Reunião de pesquisa',place:'Bloco Central',host:'Prof. Ana Lima',exp:Date.now()+4*36e5,pin:'VIS-943-128',id:'A7F3'};
+const TRAF=[[20,2],[85,10],[160,25],[120,40],[90,70],[140,95],[110,120],[70,90],[95,80],[130,100],[150,140],[80,160],[40,120],[25,80],[15,50],[8,30],[4,15]]; // 06h..22h
+
+/* ======================= UTILIDADES ======================= */
+const logoSVG=s=>`<svg width="${s}" height="${s}" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="lg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#2563eb"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+<path d="M24 3 6 10v13c0 11 7.5 19 18 22 10.5-3 18-11 18-22V10L24 3Z" fill="#0a1f55" stroke="url(#lg)" stroke-width="2.5"/>
+<circle cx="24" cy="29" r="2.5" fill="#22d3ee"/><path d="M18 24a8.5 8.5 0 0 1 12 0M13.5 19.5a15 15 0 0 1 21 0" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+document.querySelectorAll('.logo').forEach(e=>e.innerHTML=logoSVG(34));
+function toast(t){const e=$('toast');e.textContent=t;e.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.add('hidden'),2600)}
+function beep(ok){try{const a=new(window.AudioContext||webkitAudioContext)(),t=a.currentTime;(ok?[880,1175]:[180,150]).forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.type=ok?'sine':'sawtooth';g.gain.value=.15;o.connect(g);g.connect(a.destination);o.start(t+i*.15);o.stop(t+i*.15+.13)})}catch(e){}}
+function paintAv(){const ini=U.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+ document.querySelectorAll('.av').forEach(e=>{e.style.backgroundImage=U.photo?`url(${U.photo})`:'';e.textContent=U.photo?'':ini});}
+function setPhoto(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{U.photo=r.result;paintAv()};r.readAsDataURL(f)}
+$('photoIn').onchange=e=>setPhoto(e.target);$('photoIn2').onchange=e=>setPhoto(e.target);
+$('o-cpf').oninput=e=>{let v=e.target.value.replace(/\D/g,'').slice(0,11);e.target.value=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')};
+
+/* ======================= NAVEGAÇÃO ======================= */
+function go(s){
+  document.querySelectorAll('.scr').forEach(e=>e.classList.toggle('on',e.id==='s-'+s));
+  $('nav').classList.toggle('hidden',s==='onb'||s==='admin');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===s));
+  if(s==='hist')renderHist(); if(s==='admin')renderAdmin(); if(s==='prof')renderProf(); if(s==='home')renderHome(); if(s==='visit')renderVisit();
+  window.scrollTo(0,0); lucide.createIcons();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+/* ======================= ONBOARDING ======================= */
+function renderSteps(){const st=document.querySelectorAll('.st');st.forEach((e,i)=>e.classList.toggle('hidden',i!==step));
+ $('steps').innerHTML=[0,1,2].map(i=>`<div class="h-1 flex-1 rounded ${i<=step?'bg-cyan-400':'bg-white/10'}"></div>`).join('');
+ $('obNext').textContent=step==2?'Concluir cadastro':'Continuar';$('obBack').style.visibility=step?'visible':'hidden';paintAv()}
+$('obBack').onclick=()=>{step--;renderSteps()};
+$('obNext').onclick=()=>{
+  if(step==1&&(!$('o-name').value.trim()||$('o-cpf').value.length<14))return toast('Preencha nome e CPF válidos');
+  if(step==2){if($('o-p1').value.length<8||$('o-p1').value!==$('o-p2').value)return toast('Senhas devem coincidir (mín. 8 caracteres)');
+    Object.assign(U,{name:$('o-name').value.trim(),cpf:$('o-cpf').value,mat:$('o-mat').value,mail:$('o-mail').value,type:$('o-type').value});step=0;renderSteps();return go('home')}
+  step++;renderSteps()};
+
+/* ======================= TOTP (RFC 6238 simplificado, 30 s) ======================= */
+async function otp(seed){
+  try{const enc=new TextEncoder(),k=await crypto.subtle.importKey('raw',enc.encode(SECRET),{name:'HMAC',hash:'SHA-1'},false,['sign']);
+    const s=new Uint8Array(await crypto.subtle.sign('HMAC',k,enc.encode(seed))),o=s[19]&15;
+    return String((((s[o]&127)<<24)|(s[o+1]<<16)|(s[o+2]<<8)|s[o+3])%1e6).padStart(6,'0')
+  }catch(e){let h=2166136261;for(const c of SECRET+seed){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return String((h>>>0)%1e6).padStart(6,'0')} // fallback sem WebCrypto
+}
+function drawQR(el,text){const q=qrcode(0,'M');q.addData(text);q.make();el.innerHTML=`<img alt="QR Code" src="${q.createDataURL(6,2)}">`} // nível M, zona silenciosa de 2 módulos
+async function regen(c){cur.c=c;cur.otp=await otp(U.mat+':'+c);cur.pin=fmtPin(cur.otp);cur.token=`FORTEC1.${U.mat}.${c}.${cur.otp}`;
+  $('pin').textContent=cur.pin;drawQR($('qr'),cur.token)}
+function refreshPin(){offset++;lastC=-1;toast('Novo PIN/QR gerado; o anterior foi invalidado');}
+async function tick(){
+  const now=Date.now(),c=Math.floor(now/3e4)+offset;
+  if(c!==lastC){lastC=c;await regen(c)}
+  const rem=3e4-now%3e4;$('bar').style.width=rem/300+'%';$('cd').textContent=Math.ceil(rem/1000)+'s';
+  const vr=V.exp-now,vc=$('vleft');if(vc)vc.textContent=vr>0?`${Math.floor(vr/36e5)}h ${pad(Math.floor(vr%36e5/6e4))}min ${pad(Math.floor(vr%6e4/1e3))}s`:'EXPIRADO';
+}
+
+/* ======================= HOME / PERFIL ======================= */
+function renderHome(){$('hello').textContent='Olá, '+U.name.split(' ')[0]+'!';$('h-type').textContent=U.type;
+  const l=LOG.find(x=>x.ok&&x.mov==='Entrada');$('last').textContent=l?`Última entrada: ${l.gate} – ${hm(l.d)}h`:'Sem registros'}
+function renderProf(){$('p-name').textContent=U.name;$('p-sub').textContent=`${U.type} · Mat. ${U.mat}`;$('p-mail').value=U.mail;$('p-cpf').value=mask(U.cpf)}
+
+/* ======================= VISITANTE ======================= */
+function genPass(){
+  const n=$('v-name').value.trim();if(!n)return toast('Informe o nome do visitante');
+  const r=()=>String(Math.floor(Math.random()*900)+100);
+  V={name:n,doc:$('v-doc').value||'Não informado',reason:$('v-reason').value,place:$('v-place').value,host:U.name,exp:Date.now()+$('v-dur').value*36e5,pin:`VIS-${r()}-${r()}`,id:Math.random().toString(16).slice(2,6).toUpperCase()};
+  renderVisit();toast('Passe gerado com sucesso')}
+function renderVisit(){
+  $('vcard').innerHTML=`<div class="flex items-center justify-between mb-2"><b class="text-cyan-300">CARTÃO DE VISITANTE</b><span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">TEMPORÁRIO</span></div>
+  <div class="bg-white rounded-xl p-2 w-40 mx-auto" id="vqr"></div>
+  <div class="text-center mt-2 font-mono text-xl font-bold tracking-widest text-cyan-300">${V.pin}</div>
+  <div class="text-center text-xs text-slate-400">Válido até ${V.exp&&hm(new Date(V.exp))}h de ${new Date(V.exp).toLocaleDateString('pt-BR')} · restam <b id="vleft" class="text-white"></b></div>
+  <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-3">
+   <div><span class="text-slate-500">Visitante</span><br>${V.name}</div><div><span class="text-slate-500">Anfitrião</span><br>${V.host}</div>
+   <div><span class="text-slate-500">Motivo</span><br>${V.reason}</div><div><span class="text-slate-500">Local autorizado</span><br>${V.place}</div>
+   <div class="col-span-2"><span class="text-slate-500">Documento</span><br>${V.doc.length>8?V.doc.slice(0,4)+'••••'+V.doc.slice(-2):V.doc}</div></div>
+  <ul class="text-[11px] text-slate-400 mt-3 list-disc pl-4"><li>Uso único por sentido, somente no local autorizado.</li><li>Apresente documento com foto na portaria.</li><li>Passe intransferível; expira automaticamente.</li></ul>`;
+  drawQR($('vqr'),`FORTEC-VIS.${V.id}.${V.exp}`)}
+
+/* ======================= REGISTROS / HISTÓRICO ======================= */
+function addLog(e){LOG.unshift(e);renderHome();if($('s-hist').classList.contains('on'))renderHist();
+  if(e.ok){const i=Math.min(16,Math.max(0,e.d.getHours()-6));TRAF[i][e.mov==='Entrada'?0:1]++}
+  feed(e.ok?`✅ ${hm(e.d)} · ${e.who||U.name.split(' ')[0]} · ${e.mov} · ${e.gate}`:`🚨 ${hm(e.d)} · Tentativa inválida · ${e.gate} (${e.met})`,e.ok);
+  if(!e.ok)$('m-alerts').textContent=+$('m-alerts').textContent+1;if($('s-admin').classList.contains('on'))renderChart()}
+function renderHist(){
+  const f=$('f-gate');if(!f.options.length)f.innerHTML='<option value="">Todos os locais</option>'+GATES.map(g=>`<option>${g}</option>`).join('');
+  const d=$('f-date').value,g=f.value;
+  const rows=LOG.filter(x=>(!d||dk(x.d)===d)&&(!g||x.gate===g));
+  $('hist').innerHTML=rows.map(x=>`<div class="card !p-3 flex items-center gap-3"><div class="text-xl">${x.mov==='Entrada'?'⬇️':'⬆️'}</div>
+   <div class="flex-1"><div class="text-sm font-semibold">${x.gate}</div><div class="text-[11px] text-slate-400">${x.d.toLocaleDateString('pt-BR')} ${hm(x.d)} · ${x.mov} · ${x.met}</div></div>
+   <span class="text-xs font-semibold ${x.ok?'ok':'bad'}">${x.ok?'Autorizado':'Recusado'}</span></div>`).join('')||'<p class="text-center text-slate-500 text-sm py-8">Nenhum registro para o filtro.</p>'}
+
+/* ======================= ADMIN ======================= */
+const GST=GATES.map((g,i)=>[g,i!==5]);
+function renderChart(){const mx=Math.max(...TRAF.flat());
+  $('chart').innerHTML=TRAF.map(([a,b])=>`<div class="flex-1 flex items-end gap-px h-full"><div class="flex-1 bg-blue-500 rounded-t" style="height:${a/mx*100}%"></div><div class="flex-1 bg-cyan-300 rounded-t" style="height:${b/mx*100}%"></div></div>`).join('')}
+function renderAdmin(){renderChart();$('m-gates').textContent=GST.filter(g=>g[1]).length+'/'+GST.length;
+  $('gl').innerHTML=GST.map(g=>`<div class="flex justify-between"><span>${g[0]}</span><span class="${g[1]?'ok':'bad'}">● ${g[1]?'online':'offline'}</span></div>`).join('')}
+function feed(t,ok){const e=document.createElement('div');e.className='border-l-2 pl-2 '+(ok?'border-emerald-400':'border-red-400 bad');e.textContent=t;const f=$('feed');f.prepend(e);while(f.children.length>30)f.lastChild.remove()}
+// Gerador de eventos simulados em tempo real
+function randomEvent(){const bad=Math.random()<.14,d=new Date(),g=GATES[Math.floor(Math.random()*5)];
+  const e={d,gate:g,mov:Math.random()<.6?'Entrada':'Saída',met:Math.random()<.7?'QR Code':'PIN',ok:!bad,who:NAMES[Math.floor(Math.random()*NAMES.length)]};
+  feed(e.ok?`✅ ${hm(d)} · ${e.who} · ${e.mov} · ${e.gate}`:`🚨 ${hm(d)} · Token inválido/expirado · ${g}`,e.ok);
+  if(e.ok){TRAF[Math.min(16,Math.max(0,d.getHours()-6))][e.mov==='Entrada'?0:1]++;$('m-users').textContent=(12847+Math.floor(Math.random()*40)).toLocaleString('pt-BR')}
+  else $('m-alerts').textContent=+$('m-alerts').textContent+1;
+  $('m-cpu').textContent=(30+Math.floor(Math.random()*25))+'%';if($('s-admin').classList.contains('on'))renderChart()}
+
+/* ======================= SIMULADOR DE CATRACA ======================= */
+function openSim(){$('sGate').innerHTML=GATES.map(g=>`<option>${g}</option>`).join('');$('sim').classList.remove('hidden');$('simOut').className='rounded-2xl py-6 text-center font-bold text-lg bg-slate-800 text-slate-400';$('simOut').textContent='Aguardando leitura…'}
+async function scan(kind,val){
+  let ok=false,why='',met=kind==='qr'?'QR Code':kind==='pin'?'PIN':'Passe visitante';
+  if(kind==='qr'){if(used.has(cur.token))why='Token já utilizado (anti-replay). Atualize o PIN.';else{ok=true;used.add(cur.token)}}
+  else if(kind==='pin'){const v=(val||'').replace(/\D/g,'');
+    if(v!==cur.otp)why='PIN inválido ou expirado';else if(used.has('p'+cur.token))why='PIN já utilizado. Atualize o PIN.';else{ok=true;used.add('p'+cur.token)}}
+  else{if(Date.now()>V.exp)why='Passe de visitante expirado';else if(V.place!==$('sGate').value&&V.place!=='Bloco Central')why='Local não autorizado';else ok=true}
+  const o=$('simOut');o.className='rounded-2xl py-6 text-center font-bold text-lg '+(ok?'bg-emerald-500/25 text-emerald-300':'bg-red-500/25 text-red-300');
+  o.innerHTML=ok?'✅ ACESSO LIBERADO<div class="text-xs font-normal">Catraca destravada</div>':'⛔ ACESSO RECUSADO<div class="text-xs font-normal">'+why+'</div>';
+  beep(ok);if(navigator.vibrate)navigator.vibrate(ok?80:[60,40,60]);
+  addLog({d:new Date(),gate:$('sGate').value,mov:$('sMov').value,met,ok,who:kind==='vis'?V.name:null});
+}
+
+/* ======================= INICIALIZAÇÃO ======================= */
+renderSteps();renderHome();renderVisit();paintAv();lucide.createIcons();
+['✅ 08:15 · Marina Costa · Entrada · Bloco Central','✅ 08:12 · Prof. Ricardo Alves · Entrada · Portaria Principal','🚨 08:09 · Token expirado · Biblioteca','✅ 08:03 · Lucas Ferreira · Entrada · Restaurante Univ.'].reverse().forEach(t=>feed(t,!t.startsWith('🚨')));
+setInterval(tick,250);tick();setInterval(randomEvent,5000);
+</script>
+</body>
+</html>
